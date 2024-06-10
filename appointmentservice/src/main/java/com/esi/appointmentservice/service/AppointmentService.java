@@ -9,6 +9,8 @@ import com.esi.appointmentservice.repository.AppointmentRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.kafka.core.KafkaTemplate;
+
 @RequiredArgsConstructor
 @Service
 public class AppointmentService {
@@ -16,10 +18,18 @@ public class AppointmentService {
   @Autowired
   private AppointmentRepository appointmentRepository;
 
+  private final KafkaTemplate<String, AppointmentDto> jsonKafkaTemplate;
+
+  public void sendJsonToAppointmentTopic(AppointmentDto appointmentDto){
+    jsonKafkaTemplate.send("appointmentTopic", appointmentDto);
+  }
+
   public void appointmentBooked(AppointmentDto appointmentDto) {
 
     Appointment appointment = mapToAppointment(appointmentDto);
     appointmentRepository.save(appointment);
+
+    sendJsonToAppointmentTopic(appointmentDto);
   }
 
   private Appointment mapToAppointment(AppointmentDto appointmentDto) {
